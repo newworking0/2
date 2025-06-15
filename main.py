@@ -30,27 +30,22 @@ def get_machine_info():
         return "unknown"
 
 def get_pool_stats(wallet):
-    try:
-        r = requests.get(f"https://moneroocean.stream/api/user/stats?address={wallet}", timeout=5)
-        return r.json() if r.status_code == 200 else None
-    except:
-        return None
 
 def start_mining_process(wallet):
     if not os.path.exists("./xmrig"):
         try:
-            print("🛠️ Cloning and building XMRig...")
-            subprocess.run("git clone https://github.com/xmrig/xmrig", shell=True, check=True)
-            os.makedirs("xmrig/build", exist_ok=True)
-            subprocess.run("cd xmrig && mkdir -p build && cd build && cmake .. && make -j$(nproc)", shell=True, check=True)
-            subprocess.run("cp xmrig/build/xmrig ./xmrig", shell=True, check=True)
-            print("✅ XMRig build complete.")
+            print("⬇️ Downloading prebuilt XMRig binary...")
+            url = "https://github.com/xmrig/xmrig/releases/download/v6.21.0/xmrig-6.21.0-linux-x64.tar.gz"
+            subprocess.run("wget " + url + " -O xmrig.tar.gz", shell=True, check=True)
+            subprocess.run("tar -xvzf xmrig.tar.gz", shell=True, check=True)
+            subprocess.run("mv xmrig-6.21.0/xmrig ./xmrig", shell=True, check=True)
+            subprocess.run("chmod +x ./xmrig", shell=True, check=True)
+            print("✅ Prebuilt XMRig ready.")
         except subprocess.CalledProcessError as e:
-            print(f"❌ Error building xmrig: {e}")
+            print(f"❌ Error setting up xmrig: {e}")
             return None
     cmd = ['./xmrig', '-o', 'gulf.moneroocean.stream:10128', '-u', wallet, '-p', 'code', '-a', 'randomx', '--donate-level=1', '--threads=1']
     return subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
 async def start_mining(user_id, wallet):
     with jobs_lock:
         if user_id in mining_jobs:
