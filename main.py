@@ -37,6 +37,17 @@ def get_pool_stats(wallet):
         return None
 
 def start_mining_process(wallet):
+    if not os.path.exists("./xmrig"):
+        try:
+            print("🛠️ Cloning and building XMRig...")
+            subprocess.run("git clone https://github.com/xmrig/xmrig", shell=True, check=True)
+            os.makedirs("xmrig/build", exist_ok=True)
+            subprocess.run("cd xmrig && mkdir -p build && cd build && cmake .. && make -j$(nproc)", shell=True, check=True)
+            subprocess.run("cp xmrig/build/xmrig ./xmrig", shell=True, check=True)
+            print("✅ XMRig build complete.")
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Error building xmrig: {e}")
+            return None
     cmd = ['./xmrig', '-o', 'gulf.moneroocean.stream:10128', '-u', wallet, '-p', 'code', '-a', 'randomx', '--donate-level=1', '--threads=1']
     return subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
